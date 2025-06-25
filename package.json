@@ -3,6 +3,10 @@
   "displayName": "scl-language-support",
   "description": "Language support for Siemens SCL using Python language server",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/uzivatel/scl-language-support.git"
+  },
   "engines": {
     "vscode": "^1.100.0"
   },
