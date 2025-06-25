@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "repository": {
     "type": "git",
-    "url": "https://github.com/uzivatel/scl-language-support.git"
+    "url": "https://github.com/Slickuss/scl-language-server.git"
   },
   "engines": {
     "vscode": "^1.100.0"
