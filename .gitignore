@@ -1,0 +1,21 @@
+# Build artifacts
+dist/
+out/
+*.vsix
+
+# Dependencies
+node_modules/
+
+# VSCode test runner
+.vscode-test/
+
+# Editor/project config (optional)
+.vscode/
+
+# Logs and temp
+*.log
+*.tmp
+
+# pycache
+__pycache__
+*.pyc
