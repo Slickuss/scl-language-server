@@ -13,9 +13,6 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onLanguage:scl"
-  ],
   "main": "./dist/extension.js",
   "contributes": {
     "languages": [
