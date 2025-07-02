@@ -7,6 +7,8 @@
     "type": "git",
     "url": "https://github.com/Slickuss/scl-language-server.git"
   },
+  "publisher": "slickuss",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.100.0"
   },
@@ -57,7 +59,7 @@
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
-    "lint": "eslint src",
+    "lint": "eslint client/src",
     "test": "vscode-test"
   },
   "devDependencies": {

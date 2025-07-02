@@ -3,6 +3,7 @@ from lsprotocol.types import Diagnostic, DiagnosticSeverity, Range, Position
 from pygls.workspace import Document
 from pygls.server import LanguageServer
 from parser_def import update_parser, parser
+from syntax_keywords import SCL_KEYWORDS
 
 
 def run_diagnostics(ls: LanguageServer, doc: Document):
@@ -10,14 +11,18 @@ def run_diagnostics(ls: LanguageServer, doc: Document):
     diagnostics = []
 
     lines = doc.lines
-    diagnostics += check_assignments(lines)
+    declared_vars = set(parser.get_all_top_level_variables())
+    diagnostics += check_assignments(lines, declared_vars)
     diagnostics += check_if_blocks(lines)
 
     ls.publish_diagnostics(doc.uri, diagnostics)
 
 
 def is_literal(value: str) -> bool:
-    return re.match(r"^\d+(\.\d+)?$", value) or value.upper() in ("TRUE", "FALSE")
+    return (
+        re.match(r"^\d+(\.\d+)?$", value)
+        or value.upper() in SCL_KEYWORDS
+    )
 
 
 def is_var_defined(varname: str) -> bool:
@@ -29,7 +34,7 @@ def extract_variables(expr: str) -> list[str]:
     return re.findall(r"[\w.]+", expr)
 
 
-def check_assignments(lines: list[str]) -> list[Diagnostic]:
+def check_assignments(lines: list[str], declared_vars: set[str]) -> list[Diagnostic]:
     diagnostics = []
 
     in_code_block = False
@@ -49,27 +54,51 @@ def check_assignments(lines: list[str]) -> list[Diagnostic]:
         lhs, rhs = match.groups()
 
         for var in extract_variables(lhs) + extract_variables(rhs):
-            if not is_literal(var) and not is_var_defined(var):
+            if (
+                not is_literal(var)
+                and not is_var_defined(var)
+                and var not in declared_vars
+            ):
                 diagnostics.append(Diagnostic(
                     range=Range(
                         start=Position(line=i, character=line.find(var)),
                         end=Position(line=i, character=line.find(var) + len(var))
                     ),
-                    message=f"Variable '{var}' is not edefined.",
-                    severity=DiagnosticSeverity.Error,
+                    message=f"Variable '{var}' is not defined.",
+                    severity=DiagnosticSeverity.Warning,  # Changed to Warning (orange)
                     source="scl-ls"
                 ))
 
+        # Check for missing semicolon, but allow line continuation with logical operators
         if not code.endswith(";"):
-            diagnostics.append(Diagnostic(
-                range=Range(
-                    start=Position(line=i, character=len(code)),
-                    end=Position(line=i, character=len(code) + 1)
-                ),
-                message="Missing semicolon ';'",
-                severity=DiagnosticSeverity.Error,
-                source="scl-ls"
-            ))
+            continuation_found = False
+            logical_ops = ("AND", "OR", "XOR", "NOT")
+            # Look ahead for logical operator at the start of any following line(s)
+            for k in range(i + 1, len(lines)):
+                next_line = lines[k].split("//")[0]
+                if not next_line.strip():
+                    continue  # skip empty/comment lines
+                # Check if the first non-empty token is a logical operator
+                tokens = next_line.lstrip().split()
+                # Accept logical operator as the first or second token (to allow for indentation)
+                if tokens and tokens[0].upper() in logical_ops:
+                    continuation_found = True
+                    break
+                # Accept if the second token is a logical operator (for indented lines)
+                if len(tokens) > 1 and tokens[1].upper() in logical_ops:
+                    continuation_found = True
+                    break
+                break  # only check the first non-empty line after current
+            if not continuation_found:
+                diagnostics.append(Diagnostic(
+                    range=Range(
+                        start=Position(line=i, character=len(code)),
+                        end=Position(line=i, character=len(code) + 1)
+                    ),
+                    message="Missing semicolon ';'",
+                    severity=DiagnosticSeverity.Error,
+                    source="scl-ls"
+                ))
 
     return diagnostics
 

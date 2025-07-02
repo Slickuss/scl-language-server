@@ -9,30 +9,18 @@ import {
 let client: LanguageClient;
 
 export function activate(context: vscode.ExtensionContext) {
-  // Use NODE_ENV === "development" for debug, otherwise production
-  const isDebug = process.env.NODE_ENV === "development";
+  // Always use production mode in packaged extension
   let serverOptions: ServerOptions;
 
-  if (isDebug) {
-    console.log("Starting SCL server in DEBUG mode");
-    serverOptions = {
-      command: "python",
-      args: ["-m", "scl_server.main"],
-      options: {
-        cwd: context.asAbsolutePath("server"),
-      },
-    };
-  } else {
-    console.log("Starting SCL server in PRODUCTION mode");
-    serverOptions = {
-      command: context.asAbsolutePath(
-        path.join("dist", "server", "server.exe")
-      ),
-      options: {
-        cwd: context.asAbsolutePath("server"),
-      },
-    };
-  }
+  console.log("Starting SCL server in PRODUCTION mode");
+  serverOptions = {
+    command: context.asAbsolutePath(
+      path.join("dist", "SCLserver", "server.exe")
+    ),
+    options: {
+      cwd: context.asAbsolutePath(path.join("dist", "SCLserver")),
+    },
+  };
 
   const clientOptions: LanguageClientOptions = {
     documentSelector: [{ scheme: "file", language: "scl" }],
@@ -50,8 +38,11 @@ export function activate(context: vscode.ExtensionContext) {
     () => {
       console.log("Language Client successfully started.");
     },
-    (err) => {
+    (err: any) => {
       console.error("Language Client failed to start", err);
+      vscode.window.showErrorMessage(
+        "SCL Language Server failed to start: " + err.message
+      );
     }
   );
 }
@@ -59,3 +50,9 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate(): Thenable<void> | undefined {
   return client?.stop();
 }
+(err: any) => {
+  console.error("Language Client failed to start", err);
+  vscode.window.showErrorMessage(
+    "SCL Language Server failed to start: " + err.message
+  );
+};

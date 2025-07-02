@@ -2,6 +2,11 @@
 dist/
 out/
 *.vsix
+*.pyz
+*.exe
+*.toc
+*.pkg
+*.zip
 
 # Dependencies
 node_modules/
@@ -15,6 +20,8 @@ node_modules/
 # Logs and temp
 *.log
 *.tmp
+warn*
+xref*
 
 # pycache
 __pycache__

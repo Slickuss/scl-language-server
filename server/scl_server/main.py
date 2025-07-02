@@ -43,4 +43,7 @@ def did_change(ls, params: DidChangeTextDocumentParams):
     run_diagnostics(ls, doc)
 
 if __name__ == "__main__":
+    print("Setting up the server")
+    import time
+    time.sleep(10)
     server.start_io()

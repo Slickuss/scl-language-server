@@ -10,6 +10,5 @@ src/**
 *.log
 *.md
 *.yaml
-*.yml
-# DO NOT ignore server/server.exe!
-!server/**
+*.yaml
+!dist/**
