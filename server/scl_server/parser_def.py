@@ -1,5 +1,4 @@
 import re
-from collections import defaultdict
 
 class SCLParser:
     def __init__(self):
