@@ -17,9 +17,13 @@ from lsprotocol.types import (
 from pygls.server import LanguageServer
 from pygls.workspace import Document
 
-from parser_def import parser, update_parser
+from parser_structured import StructuredSCLParser
 
+# Initialize parser instance
+parser = StructuredSCLParser()
 
+def update_parser(doc):
+    parser.parse(doc.source)
 
 def find_hover_token_with_segment(line: str, char: int) -> tuple[str, int] | None:
     if char > len(line):
@@ -63,21 +67,30 @@ def handle_hover(ls: LanguageServer, params: HoverParams) -> Hover | None:
     full_token, segment_index = token_info
     path = full_token.split('.')
     target_path = path[:segment_index + 1]
+    full_path_str = ".".join(target_path)
 
-    hover_data = parser.get_hover_info(target_path)
-    if not hover_data:
+    node = parser.all_nodes.get(full_path_str)
+    if not node:
         return None
 
-    # Preparation of the output depending on whether it is a structure or a final variable
-    if hover_data.get("children") is not None:
+    # Build comment chain
+    comment_chain = []
+    for i in range(1, len(target_path) + 1):
+        sub_path = ".".join(target_path[:i])
+        n = parser.all_nodes.get(sub_path)
+        if n and n.comment:
+            comment_chain.append(n.comment)
+    comment_str = ", ".join(comment_chain) if comment_chain else ""
+
+    if node.data_type == "STRUCT":
         type_str = "Type: STRUCT"
-        comment_str = f"\nComment:\n{hover_data['comment_chain']}" if hover_data.get("comment_chain") else ""
-        result = f"{type_str}{comment_str}"
+        comment_out = f"\nComment:\n{comment_str}" if comment_str else ""
+        result = f"{type_str}{comment_out}"
     else:
-        type_str = f"Type: {hover_data.get('type', '')}"
-        default_str = f"\nDefault: {hover_data['default']}" if hover_data.get("default") else ""
-        comment_str = f"\nComment: {hover_data['comment_chain']}" if hover_data.get("comment_chain") else ""
-        result = f"{type_str}{default_str}{comment_str}"
+        type_str = f"Type: {node.data_type}"
+        default_str = f"\nDefault: {node.default}" if node.default else ""
+        comment_out = f"\nComment: {comment_str}" if comment_str else ""
+        result = f"{type_str}{default_str}{comment_out}"
 
     return Hover(contents=MarkupContent(kind=MarkupKind.PlainText, value=result))
 
@@ -94,8 +107,14 @@ def handle_completion(ls: LanguageServer, params: CompletionParams) -> list[Comp
     path_parts = full_path.split('.')
     prefix = path_parts[-1]
     path = path_parts[:-1]
+    parent_path_str = ".".join(path) if path else None
 
-    candidates = parser.get_completion_items(path) if path else parser.get_all_top_level_variables()
+    if parent_path_str:
+        parent_node = parser.all_nodes.get(parent_path_str)
+        candidates = list(parent_node.children.keys()) if parent_node and parent_node.children else []
+    else:
+        candidates = list(parser.variables.keys())
+
     filtered = [c for c in candidates if c.startswith(prefix)]
     return [CompletionItem(label=s) for s in filtered]
 

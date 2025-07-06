@@ -2,8 +2,15 @@ import re
 from lsprotocol.types import Diagnostic, DiagnosticSeverity, Range, Position
 from pygls.workspace import Document
 from pygls.server import LanguageServer
-from parser_def import update_parser, parser
+from parser_structured import StructuredSCLParser
 from syntax_keywords import SCL_KEYWORDS
+
+# Initialize parser instance
+parser = StructuredSCLParser()
+
+
+def update_parser(doc):
+    parser.parse(doc.source)
 
 
 def run_diagnostics(ls: LanguageServer, doc: Document):
@@ -11,7 +18,7 @@ def run_diagnostics(ls: LanguageServer, doc: Document):
     diagnostics = []
 
     lines = doc.lines
-    declared_vars = set(parser.get_all_top_level_variables())
+    declared_vars = set(parser.variables.keys())
     diagnostics += check_assignments(lines, declared_vars)
     diagnostics += check_if_blocks(lines)
     diagnostics += check_variable_prefix_collisions(lines)
@@ -29,8 +36,8 @@ def is_literal(value: str) -> bool:
 
 
 def is_var_defined(varname: str) -> bool:
-    path = varname.split(".")
-    return parser.get_hover_info(path) is not None
+    # Use parser.all_nodes for variable existence
+    return varname in parser.all_nodes
 
 
 def preprocess_function_block_info(lines: list[str]):

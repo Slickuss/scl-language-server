@@ -1,5 +1,4 @@
-SCL_KEYWORDS = {
-    # Control flow
+CONTROL_FLOW_KEYWORDS = {
     "IF", "THEN", "ELSE", "ELSIF", "END_IF",
     "CASE", "OF", "END_CASE",
     "FOR", "TO", "BY", "DO", "END_FOR",
@@ -8,31 +7,50 @@ SCL_KEYWORDS = {
     "EXIT", "RETURN",
     "CONTINUE",
     "BEGIN", "END",
+}
 
-    # Boolean and logic
+BOOLEAN_LOGIC_KEYWORDS = {
     "TRUE", "FALSE", "NULL", "UNDEFINED",
-    "AND", "OR", "NOT", "XOR",
+}
 
-    # Data types (if present in keywords)
+BOOLEAN_LOGIC_OPERATORS = {
+    "AND", "OR", "NOT", "XOR",
+}
+
+DATA_TYPE_KEYWORDS = {
     "BOOL", "BYTE", "WORD", "DWORD", "LWORD",
     "SINT", "USINT", "INT", "UINT", "DINT", "UDINT", "LINT", "ULINT",
     "REAL", "LREAL",
     "CHAR", "WCHAR", "STRING", "WSTRING",
     "TIME", "DATE", "TIME_OF_DAY", "TOD", "DATE_AND_TIME", "DT",
+}
 
-    # Declaration
+DECLARATION_KEYWORDS = {
     "VAR", "VAR_INPUT", "VAR_OUTPUT", "VAR_IN_OUT", "VAR_TEMP", "VAR_GLOBAL", "VAR_EXTERNAL", "VAR_ACCESS", "VAR_CONFIG", "VAR_RETAIN", "VAR_STAT", "VAR_INST",
-    "END_VAR", "CONSTANT",
+    "END_VAR", "CONST", "END_CONST",
+}
 
-    # Function/Block/Program
+BLOCK_PROGRAM_KEYWORDS = {
     "FUNCTION", "END_FUNCTION",
     "FUNCTION_BLOCK", "END_FUNCTION_BLOCK",
     "PROGRAM", "END_PROGRAM",
     "STRUCT", "END_STRUCT",
     "TYPE", "END_TYPE",
     "ARRAY", "OF",
+}
 
-    # Misc
+MISC_KEYWORDS = {
     "WITH", "AT", "RETURNS", "REFERENCE", "EN", "ENO",
     ""
 }
+
+# Unified set for compatibility
+SCL_KEYWORDS = (
+    CONTROL_FLOW_KEYWORDS
+    | BOOLEAN_LOGIC_KEYWORDS
+    | BOOLEAN_LOGIC_OPERATORS
+    | DATA_TYPE_KEYWORDS
+    | DECLARATION_KEYWORDS
+    | BLOCK_PROGRAM_KEYWORDS
+    | MISC_KEYWORDS
+)
