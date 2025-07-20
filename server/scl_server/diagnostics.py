@@ -156,6 +156,8 @@ def check_variable_prefix_collisions(lines: list[str]) -> list[Diagnostic]:
             const_name = const_match.group(1).strip()
             scope = tuple(struct_stack)
             diagnostics += check_variable_length_and_prefix(const_name, i, line, prefix_map, scope)
+        if line.strip().startswith("BEGIN"):
+            break
     return diagnostics
 
 
