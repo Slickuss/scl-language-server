@@ -75,8 +75,8 @@ def handle_hover(ls: LanguageServer, params: HoverParams) -> Hover | None:
 
     # Build comment chain
     comment_chain = []
-    for i in range(1, len(target_path) + 1):
-        sub_path = ".".join(target_path[:i])
+    for i in range(len(target_path)):
+        sub_path = ".".join(target_path[:i+1])
         n = parser.all_nodes.get(sub_path)
         if n and n.comment:
             comment_chain.append(n.comment)

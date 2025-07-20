@@ -84,6 +84,26 @@ class StructuredSCLParser:
                     current_parent = self._get_parent_node(parent_stack)
                 continue
 
+            # Constant definition: NAME := TYPE#VALUE;
+            const_match = re.match(r"(?i)(\w+)\s*:=\s*([\w]+)#([^;]+)\s*;", stripped)
+            if const_match and block_type == "CONST":
+                name, data_type, value = const_match.groups()
+                node = VariableNode(
+                    name=name,
+                    var_type="constant",
+                    data_type=data_type,
+                    parent=current_parent,
+                    default=value.strip(),
+                    comment=self._extract_comment(stripped),
+                    block_type=block_type
+                )
+                if current_parent:
+                    current_parent.add_child(node)
+                else:
+                    self.variables[name] = node
+                self.all_nodes[self._full_path(parent_stack, name)] = node
+                continue
+
             # Variable declaration
             var_match = re.match(r"(?i)(\w+)\s*:\s*([\w.]+)(?:\s*:=\s*([^;]+))?\s*;", stripped)
             if var_match and block_type:
@@ -113,7 +133,7 @@ class StructuredSCLParser:
             return "output"
         if block_type == "VAR_IN_OUT":
             return "inout"
-        if block_type == "VAR_STATIC":
+        if block_type == "VAR":
             return "static"
         if block_type == "VAR_TEMP":
             return "temporary"
@@ -148,8 +168,3 @@ class StructuredSCLParser:
         if node:
             return [child.to_dict() for child in node.children.values()]
         return []
-
-# Example usage:
-# parser = StructuredSCLParser()
-# parser.parse(scl_code)
-# print(parser.get_all_variables())

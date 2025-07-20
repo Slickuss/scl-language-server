@@ -45,14 +45,15 @@ def preprocess_function_block_info(lines: list[str]):
     fb_names = set()
     in_var_block = False
     var_decl_pattern = re.compile(r"^\s*([\w.]+)\s*:\s*([\w.]+)\s*;")
+    const_decl_pattern = re.compile(r"^\s*([\w.]+)\s*:=\s*([\w]+)#([^;]+)\s*;")
     call_pattern = re.compile(r"\b([\w.]+)\s*\(([^)]*)\)")
     fb_arg_names = set()
     for line in lines:
         upper = line.strip().upper()
-        if upper.startswith("VAR"):
+        if upper.startswith("VAR") or upper.startswith("CONST"):
             in_var_block = True
             continue
-        if upper.startswith("END_VAR"):
+        if upper.startswith("END_VAR") or upper.startswith("END_CONST"):
             in_var_block = False
             continue
         if in_var_block:
@@ -61,6 +62,11 @@ def preprocess_function_block_info(lines: list[str]):
                 var_name, var_type = match.groups()
                 if var_type.upper() not in SCL_KEYWORDS:
                     fb_names.add(var_name)
+            # Also match constant definitions
+            const_match = const_decl_pattern.match(line.split("//")[0])
+            if const_match:
+                const_name, const_type, const_value = const_match.groups()
+                fb_names.add(const_name)
         # Function call argument names (IN, PT, etc.)
         for call_match in call_pattern.finditer(line):
             arglist = call_match.group(2)
@@ -124,6 +130,7 @@ def check_variable_prefix_collisions(lines: list[str]) -> list[Diagnostic]:
     struct_start_pattern = re.compile(r"(?i)^\s*(\w+)\s*:\s*STRUCT\b")
     struct_end_pattern = re.compile(r"(?i)^\s*END_STRUCT\s*;")
     var_decl_pattern = re.compile(r"(?i)^\s*([\w.]+)\s*:\s*[\w.]+\s*(?::=|:=)?")
+    const_decl_pattern = re.compile(r"(?i)^\s*([\w.]+)\s*:=\s*([\w]+)#([^;]+)\s*;")
     for i, line in enumerate(lines):
         code = line.split("//")[0].strip()
         # Check for structure start
@@ -140,9 +147,15 @@ def check_variable_prefix_collisions(lines: list[str]) -> list[Diagnostic]:
         match = var_decl_pattern.match(code)
         if match:
             var_name = match.group(1).strip()
-            # Scope is tuple of structure stack, or empty tuple for global
             scope = tuple(struct_stack)
             diagnostics += check_variable_length_and_prefix(var_name, i, line, prefix_map, scope)
+            continue
+        # Check for constant definition
+        const_match = const_decl_pattern.match(code)
+        if const_match:
+            const_name = const_match.group(1).strip()
+            scope = tuple(struct_stack)
+            diagnostics += check_variable_length_and_prefix(const_name, i, line, prefix_map, scope)
     return diagnostics
 
 
